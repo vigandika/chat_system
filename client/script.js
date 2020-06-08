@@ -16,14 +16,14 @@ const renderChatMsg = (from, msg) => {
 
 const renderVideoFrame = (from, data) => {
   let imgElement = document.getElementById(from)
-  if(!imgElement){
+  if (!imgElement) {
     $('.chat-video-container').append(`<img class="chat-video" id="${from}"/>`)
     imgElement = document.getElementById(from)
   }
   imgElement.src = data
 }
 
-const FPS = 1000/60 // 60 fps
+const FPS = 1000 / 60 // 60 fps
 // kur transferoni video ne web socketa shkon ni transfer i nsnapshotave jo video format, (jpeg t kompresum) edhe caktohen sa frame per sekond doni mi transferu
 
 // dy diva t njejte, video dergohet te klienti tjeter kurse canvasi osht self cam
@@ -37,36 +37,44 @@ let recInterval = null
 let videoRecording = false
 
 const openCam = () => {
-  if(videoRecording) return
-  if (!isWsOpen()) alert('ws is not open')  
+  if (videoRecording) return
+  if (!isWsOpen()) alert('ws is not open')
   //navigator property e browserit
   // njona prej ktyne bon        default              chrome dhe safari                    mozilla                         microsoft edge
-  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msgGetUserMedia
-  
-  if(navigator.getUserMedia){               // callback on success
-    // navigator.getUserMedia({video: true, audio: true}, 
-    navigator.getUserMedia({video: true}, 
-      (stream)=>{
+  navigator.getUserMedia =
+    navigator.getUserMedia ||
+    navigator.webkitGetUserMedia ||
+    navigator.mozGetUserMedia ||
+    navigator.msgGetUserMedia
+
+  if (navigator.getUserMedia) {
+    // callback on success
+    // navigator.getUserMedia({video: true, audio: true},
+    navigator.getUserMedia(
+      { video: true },
+      stream => {
         // per me attach streamin te video
         video.srcObject = stream
         const $topic = $('#topic-txt')
         // tash e bojme output video e shfaqim sa here t kem frames
-        recInterval = setInterval(()=>{
-          context.drawImage(video, 0,0, context.width, context.height)
+        recInterval = setInterval(() => {
+          context.drawImage(video, 0, 0, context.width, context.height)
           const topic = $topic.val()
           if (topic) {
             const msg = canvas.toDataURL('image/jpeg', 1) // take snapshot from canvas as jpeg
-            wsWriteToTopic(topic, {type:'video', msg})
+            wsWriteToTopic(topic, { type: 'video', msg })
           }
         }, FPS)
-      }, 
-      (err)=>{
+      },
+      err => {
         console.error(err)
-      })
+      }
+    )
   }
 }
 
-
+const Http = new XMLHttpRequest()
+const url = 'https://localhost:44379/api/chathistories'
 
 // PART 1
 // funksionaliteti per me shkru ne web socket
@@ -83,13 +91,25 @@ const openWs = () => {
   // socketi hapet ne momentin e instancimit
   ws = new WebSocket('ws://127.0.0.1:7070')
 
-  data = [{from:'$', msg:'ckemi'},{from:'1', msg:'ckemi'},{from:'1', msg:'ckemi'},{from:'5', msg:'ckemi'},{from:'1', msg:'ckemi'}]
-
+  data = [
+    { from: '$', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' },
+    { from: '5', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' }
+  ]
   for (let index = 0; index < 5; index++) {
     console.log(data[index].from)
 
     renderChatMsg(data[index].from, data[index].msg)
   }
+
+  Http.open('GET', url)
+  Http.send()
+  Http.onreadystatechange = e => {
+    console.log(Http.responseText)
+  }
+
   ws.addEventListener('open', onWsOpen)
   ws.addEventListener('close', onWsClose)
   ws.addEventListener('error', onWsError)
@@ -97,38 +117,40 @@ const openWs = () => {
 }
 
 // recreate ws.addEventlistener('open', )  and see cka pranon funksion
-const onWsOpen = (event) => {
+const onWsOpen = event => {
   console.log('ws connected to server')
 }
 
-const onWsClose = (event) => {
-  alert(`ws connection closed with cod)e ${event.reason} and code ${event.code}`)
+const onWsClose = event => {
+  alert(
+    `ws connection closed with cod)e ${event.reason} and code ${event.code}`
+  )
   ws.removeEventListener('open', onWsOpen)
   ws.removeEventListener('close', onWsClose)
   ws.removeEventListener('error', onWsError)
   ws.removeEventListener('message', onWsMessage)
 }
 
-const onWsError = (ev) => {
+const onWsError = ev => {
   console.error('ws error', ev)
 }
 
-const onWsMessage = (ev) => {
+const onWsMessage = ev => {
   try {
     const data = JSON.parse(ev.data.toString('utf-8'))
     const { from, topic, payload } = data
     // switch (topic) {
-      // case 'chat':
-        const { type, msg } = payload
-        switch (type) {
-          case 'text':
-            renderChatMsg(from, msg)
-            break
-          case 'video':
-             renderVideoFrame(from, msg)
-            break
-        }
-        // break
+    // case 'chat':
+    const { type, msg } = payload
+    switch (type) {
+      case 'text':
+        renderChatMsg(from, msg)
+        break
+      case 'video':
+        renderVideoFrame(from, msg)
+        break
+    }
+    // break
     // }
   } catch (error) {
     console.error(error)
@@ -137,17 +159,17 @@ const onWsMessage = (ev) => {
 
 //helper
 
-const wsSubscribeToTopic = (topic) => {
+const wsSubscribeToTopic = topic => {
   if (!isWsOpen()) {
     alert('WS is not open')
     return
   }
-  if (!topic) return  
+  if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:sub', topic: topic })
   ws.send(data)
 }
 
-const wsUnsubscribeToTopic = (topic) => {
+const wsUnsubscribeToTopic = topic => {
   if (!isWsOpen()) {
     alert('WS is not open')
     return
@@ -157,12 +179,12 @@ const wsUnsubscribeToTopic = (topic) => {
   ws.send(data)
 }
 
-const wsCreateToTopic = (topic) => {
+const wsCreateToTopic = topic => {
   if (!isWsOpen()) {
     alert('WS is not open')
     return
   }
-  if (!topic) return 
+  if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
   ws.send(data)
 }
@@ -172,20 +194,24 @@ const wsWriteToTopic = (topic, payload) => {
     alert('WS is not open')
     return
   }
-  if(!topic || !payload) return
-  const data = JSON.stringify({cmd: 'topic:write', topic: topic, payload: payload})
+  if (!topic || !payload) return
+  const data = JSON.stringify({
+    cmd: 'topic:write',
+    topic: topic,
+    payload: payload
+  })
   ws.send(data)
 }
 
 // duhet mi bind qito funksionalitete
 
 $(document).ready(() => {
-  $('#msg-form').submit((ev) => {
+  $('#msg-form').submit(ev => {
     ev.preventDefaul()
     ev.stopPropagation()
   })
 
-  $('#topic-form').submit((ev) => {
+  $('#topic-form').submit(ev => {
     ev.preventDefaul()
     ev.stopPropagation()
   })
@@ -194,35 +220,31 @@ $(document).ready(() => {
     openWs()
   })
 
-
-  $('#ws-create').click(()=>{
+  $('#ws-create').click(() => {
     const topic = $('#topic-txt').val()
     wsCreateToTopic(topic)
   })
 
-  $('#ws-sub').click(()=>{
+  $('#ws-sub').click(() => {
     const topic = $('#topic-txt').val()
     wsSubscribeToTopic(topic)
   })
 
-  $('#ws-unsub').click(()=>{
+  $('#ws-unsub').click(() => {
     const topic = $('#topic-txt').val()
     wsUnsubscribeToTopic(topic)
   })
 
-
-
-  $('#send-msg').click(()=>{
+  $('#send-msg').click(() => {
     const topic = $('#topic-txt').val()
     const msg = $('#msg-text').val()
-    if (!topic ||!msg) return
+    if (!topic || !msg) return
 
-    wsWriteToTopic(topic, {type: 'text', msg})
+    wsWriteToTopic(topic, { type: 'text', msg })
     renderChatMsg(null, msg)
   })
 
-  
-  $('#send-video').click(()=>{
+  $('#send-video').click(() => {
     openCam()
   })
 })
