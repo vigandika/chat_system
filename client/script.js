@@ -66,6 +66,14 @@ const openCam = () => {
   }
 }
 
+const Http = new XMLHttpRequest();
+const url='https://localhost:44379/api/chathistories';
+
+
+
+
+
+
 // PART 1
 // funksionaliteti per me shkru ne web socket
 let ws = null
@@ -80,6 +88,11 @@ const openWs = () => {
 
   // socketi hapet ne momentin e instancimit
   ws = new WebSocket('ws://127.0.0.1:7070')
+  Http.open("GET", url);
+  Http.send();
+  Http.onreadystatechange = (e) => {
+    console.log(Http.responseText)
+  }
   ws.addEventListener('open', onWsOpen)
   ws.addEventListener('close', onWsClose)
   ws.addEventListener('error', onWsError)
