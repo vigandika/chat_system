@@ -66,6 +66,8 @@ const openCam = () => {
   }
 }
 
+
+
 // PART 1
 // funksionaliteti per me shkru ne web socket
 let ws = null
@@ -80,6 +82,14 @@ const openWs = () => {
 
   // socketi hapet ne momentin e instancimit
   ws = new WebSocket('ws://127.0.0.1:7070')
+
+  data = [{from:'$', msg:'ckemi'},{from:'1', msg:'ckemi'},{from:'1', msg:'ckemi'},{from:'5', msg:'ckemi'},{from:'1', msg:'ckemi'}]
+
+  for (let index = 0; index < 5; index++) {
+    console.log(data[index].from)
+
+    renderChatMsg(data[index].from, data[index].msg)
+  }
   ws.addEventListener('open', onWsOpen)
   ws.addEventListener('close', onWsClose)
   ws.addEventListener('error', onWsError)
@@ -107,8 +117,8 @@ const onWsMessage = (ev) => {
   try {
     const data = JSON.parse(ev.data.toString('utf-8'))
     const { from, topic, payload } = data
-    switch (topic) {
-      case 'chat':
+    // switch (topic) {
+      // case 'chat':
         const { type, msg } = payload
         switch (type) {
           case 'text':
@@ -118,8 +128,8 @@ const onWsMessage = (ev) => {
              renderVideoFrame(from, msg)
             break
         }
-        break
-    }
+        // break
+    // }
   } catch (error) {
     console.error(error)
   }
