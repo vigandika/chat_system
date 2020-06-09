@@ -14,7 +14,6 @@ class FiekWs extends WebSocketNode.Server {
 
         /**@type {{[key:string]: WebSocketNode}} */
         this._clients = {};
-
         /**@type {{[key:string]:{write: boolean, uids:string[]} }} 
          * write - flag ( a osht channel writable prej clientave)
          *  uuids - klientat qe kane subscribe
@@ -81,10 +80,6 @@ class FiekWs extends WebSocketNode.Server {
         }
     }
 
-    _onMessage(){
-
-    }
-
     _createTopic(uid, topic){
         if(this._channels[topic]) throw new Error('ERR_TOPIC_EXISTS')
         // e fusim automatikisht userin aktual
@@ -112,7 +107,6 @@ class FiekWs extends WebSocketNode.Server {
         const t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
         // jo uid e serverit dhe a eshte topic writable
-        if(!t.write && uid !== 'srv') throw new Error('ERR_TOPIC_READ_ONLY')
         const msg = JSON.stringify({from: uid, topic:topic, payload})
         for (const key of t.uids) {
             if(key === uid) continue

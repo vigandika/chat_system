@@ -23,7 +23,7 @@ const renderVideoFrame = (from, data) => {
   imgElement.src = data
 }
 
-const FPS = 1000 / 60 // 60 fps
+const FPS = 60 // 60 fps
 // kur transferoni video ne web socketa shkon ni transfer i nsnapshotave jo video format, (jpeg t kompresum) edhe caktohen sa frame per sekond doni mi transferu
 
 // dy diva t njejte, video dergohet te klienti tjeter kurse canvasi osht self cam
@@ -41,11 +41,7 @@ const openCam = () => {
   if (!isWsOpen()) alert('ws is not open')
   //navigator property e browserit
   // njona prej ktyne bon        default              chrome dhe safari                    mozilla                         microsoft edge
-  navigator.getUserMedia =
-    navigator.getUserMedia ||
-    navigator.webkitGetUserMedia ||
-    navigator.mozGetUserMedia ||
-    navigator.msgGetUserMedia
+  navigator.getUserMedia =  navigator.getUserMedia ||  navigator.webkitGetUserMedia ||  navigator.mozGetUserMedia ||   navigator.msgGetUserMedia
 
   if (navigator.getUserMedia) {
     // callback on success
@@ -73,43 +69,91 @@ const openCam = () => {
   }
 }
 
-const Http = new XMLHttpRequest()
-const url = 'https://localhost:44379/api/chathistories'
+
 
 // PART 1
+
 // funksionaliteti per me shkru ne web socket
 let ws = null
+
+// request object instantioation
+const Http = new XMLHttpRequest()
+const url = 'https://localhost:44379/api/chathistories'
 
 // metode ndihmese
 const isWsOpen = () => {
   return ws && ws.readyState === WebSocket.OPEN
 }
 
-const openWs = () => {
-  if (isWsOpen()) return
+let loadChatHistory = (topicId) => {
+  Http.open('GET', `https://localhost:44379/api/chathistories/movieId/${topicId}`)
+  Http.send()
+  Http.onreadystatechange = e => {
+    chat_history = Http.responseText
+    // console.log(Http.responseText)
+  }
 
-  // socketi hapet ne momentin e instancimit
-  ws = new WebSocket('ws://127.0.0.1:7070')
-
-  data = [
-    { from: '$', msg: 'ckemi' },
+    data = [
+    { from: '3', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
     { from: '5', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' }
   ]
-  for (let index = 0; index < 5; index++) {
-    console.log(data[index].from)
-
+  for (let index = 0; index < data.length; index++) {
     renderChatMsg(data[index].from, data[index].msg)
   }
+  
+}
 
-  Http.open('GET', url)
+// havera t backendit 
+// me juve i kom tri kerkes
+// kom me ja u qu ni get request me mi pru filmat edhe id-t e tyne
+// kom me ja u qu ni get request me e marr chatin historyn per ni topic t caktum https://localhost:44379/api/chathistories/movieId/?
+// kom me ju u qu post requesta sikur 
+// {
+//       'topic': int(topicid),
+//       'from': string(uid),
+//       'msg': string(msg)
+// }
+
+let movies = null
+
+
+
+
+const openWs = () => {
+  if (isWsOpen()) return
+
+  // socketi hapet ne momentin e instancimit
+  ws = new WebSocket('ws://127.0.0.1:7070')
+  // ws = new WebSocket('ws://192.168.0.247:7070')
+
+
+  // get movies and from db
+  
+  Http.open('GET', 'url to movies')
   Http.send()
   Http.onreadystatechange = e => {
-    console.log(Http.responseText)
+    movies = Http.responseText
+    // console.log(Http.responseText)
   }
 
+  movies = {id:1, movie: 'borebardha'}
+  
+  for (const key in object) {
+    if (object.hasOwnProperty(key)) {
+      const element = object[key];
+      
+    }
+  }
+  console.log(movies.sd, movies[sd])
+  // Http.open('GET', url)
+  // Http.send()
+  // // anonymous function that handles asynchron. requests (see https://stackoverflow.com/questions/247483/http-get-request-in-javascript)
+  // Http.onreadystatechange = e => {
+  //   console.log(Http.responseText)
+  // }
   ws.addEventListener('open', onWsOpen)
   ws.addEventListener('close', onWsClose)
   ws.addEventListener('error', onWsError)
@@ -122,9 +166,8 @@ const onWsOpen = event => {
 }
 
 const onWsClose = event => {
-  alert(
-    `ws connection closed with cod)e ${event.reason} and code ${event.code}`
-  )
+  alert(`ws connection closed with cod)e ${event.reason} and code ${event.code}`)
+
   ws.removeEventListener('open', onWsOpen)
   ws.removeEventListener('close', onWsClose)
   ws.removeEventListener('error', onWsError)
@@ -164,9 +207,18 @@ const wsSubscribeToTopic = topic => {
     alert('WS is not open')
     return
   }
+
+  // get chat history for topic
+
+
+
   if (!topic) return
+  $(".chat-body").empty();
+
   const data = JSON.stringify({ cmd: 'topic:sub', topic: topic })
   ws.send(data)
+
+  loadChatHistory(topic.id)
 }
 
 const wsUnsubscribeToTopic = topic => {
@@ -174,6 +226,8 @@ const wsUnsubscribeToTopic = topic => {
     alert('WS is not open')
     return
   }
+  $(".chat-body").empty();
+
   if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:unsub', topic: topic })
   ws.send(data)
@@ -184,6 +238,8 @@ const wsCreateToTopic = topic => {
     alert('WS is not open')
     return
   }
+  $(".chat-body").empty();
+
   if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
   ws.send(data)
