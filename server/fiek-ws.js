@@ -15,7 +15,7 @@ class FiekWs extends WebSocketNode.Server {
         /**@type {{[key:string]: WebSocketNode}} */
         this._clients = {};
 
-        /**@type {{[key:string]:{write: boolean, uids:string[]} }} 
+        /**@type {{[key:string]:uids:string[] }} 
          * write - flag ( a osht channel writable prej clientave)
          *  uuids - klientat qe kane subscribe
         */
@@ -46,7 +46,6 @@ class FiekWs extends WebSocketNode.Server {
 
             ws.on('message', (msg)=> {
                 try {
-                    debug(msg)
                     // subscribe, unsubscribe, create topic, write to topic
                     // formati i subscribe: { cmd: 'topic:sub', topic:<topic> }
                     // formati i unsubscribe: { cmd: 'topic:unsub', topic:<topic> }
@@ -55,7 +54,6 @@ class FiekWs extends WebSocketNode.Server {
                     // write to topic: { cmd: 'topic:write', topic:<topic>, payload: * }
                     const data = JSON.parse(msg.toString('utf-8'))
                     // cmd topic i kem gjithqysh edhe i eksportojme nga data
-                    debug(data)
                     const {cmd} = data
                     // if (data.topic == '')
                     // { const {cmd} = data }
@@ -117,19 +115,23 @@ class FiekWs extends WebSocketNode.Server {
         if(!t) throw new Error('ERR_INVALID_TOPIC')
         t.uids = t.uids.filter(x => x!==uid)
         debug('client %s unsubscribed to %s', uid, topic)
-
     }
 
     _writeToTopic(uid, topic, payload, _names){
         const t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
+        
+        if (t['uids'].includes(uid)){
         // jo uid e serverit dhe a eshte topic writable
         const msg = JSON.stringify({from: _names[uid], topic:topic, payload})
+        
         for (const key of t.uids) {
             if(key === uid) continue
             const client = this._clients[key]
-            if (client && client.readyState === WebSocketNode.OPEN){
+            if (client && client.readyState === WebSocketNode.OPEN ){
                 client.send(msg)
+                }
+        
             }
         }
 
