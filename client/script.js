@@ -79,7 +79,7 @@ let ws = null
 // request object instantioation
 const Http = new XMLHttpRequest()
 const url = 'https://localhost:44379/api/chathistories'
-
+ 
 // metode ndihmese
 const isWsOpen = () => {
   return ws && ws.readyState === WebSocket.OPEN
