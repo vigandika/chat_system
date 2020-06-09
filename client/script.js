@@ -90,7 +90,7 @@ const openWs = () => {
 
   // socketi hapet ne momentin e instancimit
   ws = new WebSocket('ws://127.0.0.1:7070')
-
+  
   data = [
     { from: '$', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
@@ -119,6 +119,11 @@ const openWs = () => {
 // recreate ws.addEventlistener('open', )  and see cka pranon funksion
 const onWsOpen = event => {
   console.log('ws connected to server')
+  var name = prompt("Jepe emrin ?")
+  const data = JSON.stringify({ cmd: 'topic:init',  name: name})
+
+  ws.send(data)
+
 }
 
 const onWsClose = event => {
@@ -138,7 +143,8 @@ const onWsError = ev => {
 const onWsMessage = ev => {
   try {
     const data = JSON.parse(ev.data.toString('utf-8'))
-    const { from, topic, payload } = data
+    const { from, topic, payload } = data // from = {123:'hej}
+    console.log(from)
     // switch (topic) {
     // case 'chat':
     const { type, msg } = payload
