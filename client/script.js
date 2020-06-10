@@ -1,88 +1,3 @@
-// const { write } = require("fs")
-
-const renderDropdownList = (movies) => {
-  for (let index = 0; index < movies.length; index++) {
-    const html = `<option value = ${movies[index]}>${movies[index]}</option>`
-    $('#ws-create').append(html)    
-  }
-}
-
-
-
-
-// const render
-const renderChatMsg = (from, msg) => {
-  // per me qit From: permi chat nese nuk e ke shkrujt msg ti
-  const innerHtml = from ? `<div>From ${from}:</div><div>${msg}</div>` : msg
-  const html = `
-  <div class="w-100", id='messages'>
-    <div class="chat-msg ${from ? 'chat-msg-other' : ''}">
-    ${innerHtml}
-    </div>
-  </div>`
-
-  $('.chat-body').append(html)
-  console.log($('#messages').scrollHeight)
-
-}
-
-const renderVideoFrame = (from, data) => {
-  let imgElement = document.getElementById(from)
-  if (!imgElement) {
-    $('.chat-video-container').append(`<img class="chat-video" id="${from}"/>`)
-    imgElement = document.getElementById(from)
-  }
-  imgElement.src = data
-}
-
-const FPS = 120 // 60 fps
-// kur transferoni video ne web socketa shkon ni transfer i nsnapshotave jo video format, (jpeg t kompresum) edhe caktohen sa frame per sekond doni mi transferu
-
-// dy diva t njejte, video dergohet te klienti tjeter kurse canvasi osht self cam
-const video = document.getElementById('chat-video-src')
-// ne canvas shfaqen frames
-const canvas = document.getElementById('self-cam')
-const context = canvas.getContext('2d')
-context.height = canvas.height
-context.width = canvas.width
-let recInterval = null
-let videoRecording = false
-
-const openCam = () => {
-  if (videoRecording) return
-  if (!isWsOpen()) alert('ws is not open')
-  //navigator property e browserit
-  // njona prej ktyne bon        default              chrome dhe safari                    mozilla                         microsoft edge
-  navigator.getUserMedia =  navigator.getUserMedia ||  navigator.webkitGetUserMedia ||  navigator.mozGetUserMedia ||   navigator.msgGetUserMedia
-
-  if (navigator.getUserMedia) {
-    // callback on success
-    navigator.getUserMedia(
-      { video: true,audio:true },
-      stream => {
-        // per me attach streamin te video
-        video.srcObject = stream
-        const $topic = $('#topic-txt')
-        // tash e bojme output video e shfaqim sa here t kem frames
-        recInterval = setInterval(() => {
-          context.drawImage(video, 0, 0, context.width, context.height)
-          const topic = $('#ws-create').find(":selected").text()
-          if (topic) {
-            const msg = canvas.toDataURL('image/jpeg', 1) // take snapshot from canvas as jpeg
-            wsWriteToTopic(topic, { type: 'video', msg })
-          }
-        }, FPS)
-      },
-      err => {
-        console.error(err)
-      }
-    )
-  }
-}
-
-
-
-// PART 1
 
 // funksionaliteti per me shkru ne web socket
 let ws = null
@@ -100,7 +15,6 @@ let loadChatHistory = (topicId) => {
   // Http.open('GET', `https://localhost:44379/api/chathistories/movieId/${topicId}`)
   // Http.send()
   // Http.onreadystatechange = e => {
-  //   chat_history = Http.responseText
   //   // console.log(Http.responseText)
   // }
 
@@ -209,8 +123,11 @@ const onWsMessage = ev => {
   }
 }
 
-//helper
 
+
+
+
+// Communication with Server
 const wsSubscribeToTopic = topic => {
   if (!isWsOpen()) {
     alert('WS is not open')
@@ -243,17 +160,17 @@ const wsUnsubscribeToTopic = topic => {
   ws.send(data)
 }
 
-const wsCreateToTopic = topic => {
-  if (!isWsOpen()) {
-    alert('WS is not open')
-    return
-  }
-  $(".chat-body").empty();
+// const wsCreateToTopic = topic => {
+//   if (!isWsOpen()) {
+//     alert('WS is not open')
+//     return
+//   }
+//   $(".chat-body").empty();
 
-  if (!topic) return
-  const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
-  ws.send(data)
-}
+//   if (!topic) return
+//   const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
+//   ws.send(data)
+// }
 
 const wsWriteToTopic = (topic, payload) => {
   if (!isWsOpen()) {
@@ -271,7 +188,9 @@ const wsWriteToTopic = (topic, payload) => {
 
 }
 
-// duhet mi bind qito funksionalitete
+
+
+// Binding Events
 
 $(document).ready(() => {
   $('#msg-form').submit(ev => {
@@ -314,7 +233,6 @@ $(document).ready(() => {
 
     wsWriteToTopic(topic, { type: 'text', msg })
     renderChatMsg(null, msg)
-    // $('#messages').scrollTop =   $('#messages').scrollHeight
 
     
 
@@ -330,3 +248,87 @@ $(document).ready(() => {
     }
 });
 })
+
+
+
+// rendering 
+
+
+const renderDropdownList = (movies) => {
+  for (let index = 0; index < movies.length; index++) {
+    const html = `<option value = ${movies[index]}>${movies[index]}</option>`
+    $('#ws-create').append(html)    
+  }
+}
+
+
+
+
+// const render
+const renderChatMsg = (from, msg) => {
+  // per me qit From: permi chat nese nuk e ke shkrujt msg ti
+  const innerHtml = from ? `<div>From ${from}:</div><div>${msg}</div>` : msg
+  const html = `
+  <div class="w-100", id='messages'>
+    <div class="chat-msg ${from ? 'chat-msg-other' : ''}">
+    ${innerHtml}
+    </div>
+  </div>`
+
+  $('.chat-body').append(html)
+  $('.chat-body').scrollTop($('.chat-body')[0].scrollHeight)  
+  
+}
+
+const renderVideoFrame = (from, data) => {
+  let imgElement = document.getElementById(from)
+  if (!imgElement) {
+    $('.chat-video-container').append(`<img class="chat-video" id="${from}"/>`)
+    imgElement = document.getElementById(from)
+  }
+  imgElement.src = data
+}
+
+const FPS = 120 
+
+// dy diva t njejte, video dergohet te klienti tjeter kurse canvasi osht self cam
+const video = document.getElementById('chat-video-src')
+// ne canvas shfaqen frames
+const canvas = document.getElementById('self-cam')
+const context = canvas.getContext('2d')
+context.height = canvas.height
+context.width = canvas.width
+let recInterval = null
+let videoRecording = false
+
+const openCam = () => {
+  if (videoRecording) return
+  if (!isWsOpen()) alert('ws is not open')
+  //navigator property e browserit
+  // njona prej ktyne bon        default              chrome dhe safari                    mozilla                         microsoft edge
+  navigator.getUserMedia =  navigator.getUserMedia ||  navigator.webkitGetUserMedia ||  navigator.mozGetUserMedia ||   navigator.msgGetUserMedia
+
+  if (navigator.getUserMedia) {
+    // callback on success
+    navigator.getUserMedia(
+      { video: true,audio:true },
+      stream => {
+        // per me attach streamin te video
+        video.srcObject = stream
+        const $topic = $('#topic-txt')
+        // tash e bojme output video e shfaqim sa here t kem frames
+        recInterval = setInterval(() => {
+          context.drawImage(video, 0, 0, context.width, context.height)
+          const topic = $('#ws-create').find(":selected").text()
+          if (topic) {
+            const msg = canvas.toDataURL('image/jpeg', 1) // take snapshot from canvas as jpeg
+            wsWriteToTopic(topic, { type: 'video', msg })
+          }
+        }, FPS)
+      },
+      err => {
+        console.error(err)
+      }
+    )
+  }
+}
