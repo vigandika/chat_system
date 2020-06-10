@@ -36,8 +36,6 @@ let loadChatHistory = (topicId) => {
 let movies = null
 
 
-
-
 const openWs = () => {
   if (isWsOpen()) return
 
@@ -156,21 +154,9 @@ const wsUnsubscribeToTopic = topic => {
 
   if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:unsub', topic: topic })
-  console.log(dat)
+  console.log(data)
   ws.send(data)
 }
-
-// const wsCreateToTopic = topic => {
-//   if (!isWsOpen()) {
-//     alert('WS is not open')
-//     return
-//   }
-//   $(".chat-body").empty();
-
-//   if (!topic) return
-//   const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
-//   ws.send(data)
-// }
 
 const wsWriteToTopic = (topic, payload) => {
   if (!isWsOpen()) {
@@ -207,14 +193,6 @@ $(document).ready(() => {
     openWs()
   })
 
-  // $('#ws-create').click(() => {
-  //   // console.log($('.ws-create').val(), 'dsadsasda')
-  //   // console.log($('#ws-create').find(":selected").text(), 'dsasdasd')
-  //   // $('#aioConceptName').find(":selected").text();
-  //   const topic = $('#ws-create').find(":selected").text()
-  //   wsSubscribeToTopic(topic)
-  // })
-
   $('#ws-sub').click(() => {
     const topic = $('#ws-create').find(":selected").text()
     // const topic = $('#topic-txt').val()
@@ -222,7 +200,7 @@ $(document).ready(() => {
   })
 
   $('#ws-unsub').click(() => {
-    const topic = $('#topic-txt').val()
+    const topic = $('#ws-create').find(":selected").text()
     wsUnsubscribeToTopic(topic)
   })
 
@@ -234,9 +212,6 @@ $(document).ready(() => {
     wsWriteToTopic(topic, { type: 'text', msg })
     renderChatMsg(null, msg)
 
-    
-
-    
   })
 
   $('#send-video').click(() => {

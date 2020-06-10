@@ -15,8 +15,7 @@ class FiekWs extends WebSocketNode.Server {
         /**@type {{[key:string]: WebSocketNode}} */
         this._clients = {};
 
-        /**@type {{[key:string]:uids:string[] }} 
-         * write - flag ( a osht channel writable prej clientave)
+        /**@type {{[key:string]: string[] }} 
          *  uuids - klientat qe kane subscribe
         */
         this._channels = {};
@@ -32,7 +31,6 @@ class FiekWs extends WebSocketNode.Server {
         this.on('connection', (ws) => {
             const uid = uuid()
             this._clients[uid] = ws
-            this._names[uid] = 'hej'
 
             ws.on('error', (err)=>{ 
                 debug('error occured on client %s:%s', uid, err.toString())
@@ -63,7 +61,7 @@ class FiekWs extends WebSocketNode.Server {
                         case 'topic:init': this._names[uid] = data.name;break
                         case 'topic:sub': this._subscribeToTopic(uid, data.topic); break
                         case 'topic:unsub': this._unsubscribeToTopic(uid, data.topic); break
-                        case 'topic:write': this._writeToTopic(uid, data.topic, data.payload,this._names); break
+                        case 'topic:write': this._writeToTopic(uid, data.topic, data.payload,this._names[uid]); break
                         default: throw new Error('ERR_INVALID_CMD')
                     }
 
@@ -85,7 +83,7 @@ class FiekWs extends WebSocketNode.Server {
             delete this._clients[uid]
             Object.keys(this._channels).forEach(topic => {
                 // unsubscribe from topics
-                this._channels[topic].uids = this._clients[topic].uids.filter(x => x !== uid)
+                this._channels[topic] = this._clients[topic].filter(x => x !== uid)
             })
         }
     }
@@ -93,35 +91,36 @@ class FiekWs extends WebSocketNode.Server {
     _createTopic(uid, topic){
         if(this._channels[topic]) throw new Error('ERR_TOPIC_EXISTS')
         // e fusim automatikisht userin aktual
-        this._channels[topic] = {uids: [uid]}
+        this._channels[topic] =  [uid]
         debug('client %s created topic %s', uid, topic)
     }
 
     _subscribeToTopic(uid, topic){
         if(!this._channels[topic]) this._createTopic(uid, topic)
         const t = this._channels[topic]
-        if(!t.uids.includes(uid)) t.uids.push(uid)
+        if(!t.includes(uid)) t.push(uid)
         debug('client %s subscribed to %s', uid, topic)
 
     }
 
     _unsubscribeToTopic(uid, topic){
-        debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-        const t = this._channels[topic]
+        let t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
-        t.uids = t.uids.filter(x => x!==uid)
         debug(t)
+        this._channels[topicGIT] = t.filter(x => x!==uid)
+        debug(this._channels[topic])
         debug('client %s unsubscribed to %s', uid, topic)
     }
 
-    _writeToTopic(uid, topic, payload, _names){
-        let t = this._channels[topic]
+    _writeToTopic(uid, topic, payload, name){
+        const t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
-        if (t['uids'].includes(uid)){
+
+        if (t.includes(uid)){
         // jo uid e serverit dhe a eshte topic writable
-        const msg = JSON.stringify({from: _names[uid], topic:topic, payload})
+        const msg = JSON.stringify({from: name, topic:topic, payload})
         
-        for (const key of t.uids) {
+        for (const key of t) {
             if(key === uid) continue
             const client = this._clients[key]
             if (client && client.readyState === WebSocketNode.OPEN ){
