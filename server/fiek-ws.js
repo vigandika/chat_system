@@ -106,16 +106,17 @@ class FiekWs extends WebSocketNode.Server {
     }
 
     _unsubscribeToTopic(uid, topic){
+        debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         const t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
         t.uids = t.uids.filter(x => x!==uid)
+        debug(t)
         debug('client %s unsubscribed to %s', uid, topic)
     }
 
     _writeToTopic(uid, topic, payload, _names){
-        const t = this._channels[topic]
+        let t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
-        
         if (t['uids'].includes(uid)){
         // jo uid e serverit dhe a eshte topic writable
         const msg = JSON.stringify({from: _names[uid], topic:topic, payload})

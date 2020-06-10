@@ -35,7 +35,7 @@ const renderVideoFrame = (from, data) => {
   imgElement.src = data
 }
 
-const FPS = 60 // 60 fps
+const FPS = 120 // 60 fps
 // kur transferoni video ne web socketa shkon ni transfer i nsnapshotave jo video format, (jpeg t kompresum) edhe caktohen sa frame per sekond doni mi transferu
 
 // dy diva t njejte, video dergohet te klienti tjeter kurse canvasi osht self cam
@@ -57,9 +57,8 @@ const openCam = () => {
 
   if (navigator.getUserMedia) {
     // callback on success
-    // navigator.getUserMedia({video: true, audio: true},
     navigator.getUserMedia(
-      { video: true },
+      { video: true,audio:true },
       stream => {
         // per me attach streamin te video
         video.srcObject = stream
@@ -67,7 +66,7 @@ const openCam = () => {
         // tash e bojme output video e shfaqim sa here t kem frames
         recInterval = setInterval(() => {
           context.drawImage(video, 0, 0, context.width, context.height)
-          const topic = $topic.val()
+          const topic = $('#ws-create').find(":selected").text()
           if (topic) {
             const msg = canvas.toDataURL('image/jpeg', 1) // take snapshot from canvas as jpeg
             wsWriteToTopic(topic, { type: 'video', msg })
@@ -114,7 +113,7 @@ let loadChatHistory = (topicId) => {
   ]
   for (let index = 0; index < data.length; index++) {
     renderChatMsg(data[index].from, data[index].msg)
-    renderDropdownList(data[index].from)
+    // renderDropdownList(data[index].from)
   }
   
 }
@@ -129,7 +128,7 @@ const openWs = () => {
   if (isWsOpen()) return
 
   // socketi hapet ne momentin e instancimit
-  ws = new WebSocket('ws://192.168.186.233:7070')
+  ws = new WebSocket('ws://192.168.0.247:7070')
   // ws = new WebSocket('ws://192.168.186.226:7070')
   data = [
     { from: '3', msg: 'ckemi' },
@@ -152,7 +151,7 @@ const openWs = () => {
   //   // console.log(Http.responseText)
   // }
   // console.log(movies.sd, movies[sd])
-  // Http.open('GET', url)
+  // Http.open('GET', url
   // Http.send()
   // // anonymous function that handles asynchron. requests (see https://stackoverflow.com/questions/247483/http-get-request-in-javascript)
   // Http.onreadystatechange = e => {
@@ -240,6 +239,7 @@ const wsUnsubscribeToTopic = topic => {
 
   if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:unsub', topic: topic })
+  console.log(dat)
   ws.send(data)
 }
 
@@ -260,7 +260,7 @@ const wsWriteToTopic = (topic, payload) => {
     alert('WS is not open')
     return
   }
-  if (!topic || !payload) console.log('kloos')
+  if (!topic || !payload) return
   const data = JSON.stringify({
     cmd: 'topic:write',
     topic: topic,
@@ -308,7 +308,6 @@ $(document).ready(() => {
   })
 
   $('#send-msg').click(() => {
-    console.log('are u here')
     const topic = $('#ws-create').find(":selected").text()
     const msg = $('#msg-text').val()
     if (!topic || !msg) return
@@ -316,7 +315,8 @@ $(document).ready(() => {
     wsWriteToTopic(topic, { type: 'text', msg })
     renderChatMsg(null, msg)
     // $('#messages').scrollTop =   $('#messages').scrollHeight
-    // console.log($('#messages').scrollTop)
+
+    
 
     
   })
