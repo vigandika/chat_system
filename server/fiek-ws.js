@@ -91,10 +91,6 @@ class FiekWs extends WebSocketNode.Server {
         }
     }
 
-    _onMessage(){
-
-    }
-
     _createTopic(uid, topic){
         if(this._channels[topic]) throw new Error('ERR_TOPIC_EXISTS')
         // e fusim automatikisht userin aktual

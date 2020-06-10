@@ -5,13 +5,15 @@ const renderChatMsg = (from, msg) => {
   // per me qit From: permi chat nese nuk e ke shkrujt msg ti
   const innerHtml = from ? `<div>From ${from}:</div><div>${msg}</div>` : msg
   const html = `
-  <div class="w-100">
+  <div class="w-100", id='messages'>
     <div class="chat-msg ${from ? 'chat-msg-other' : ''}">
     ${innerHtml}
     </div>
   </div>`
 
   $('.chat-body').append(html)
+  console.log($('#messages').scrollHeight)
+
 }
 
 const renderVideoFrame = (from, data) => {
@@ -23,7 +25,7 @@ const renderVideoFrame = (from, data) => {
   imgElement.src = data
 }
 
-const FPS = 1000 / 60 // 60 fps
+const FPS = 60 // 60 fps
 // kur transferoni video ne web socketa shkon ni transfer i nsnapshotave jo video format, (jpeg t kompresum) edhe caktohen sa frame per sekond doni mi transferu
 
 // dy diva t njejte, video dergohet te klienti tjeter kurse canvasi osht self cam
@@ -41,11 +43,7 @@ const openCam = () => {
   if (!isWsOpen()) alert('ws is not open')
   //navigator property e browserit
   // njona prej ktyne bon        default              chrome dhe safari                    mozilla                         microsoft edge
-  navigator.getUserMedia =
-    navigator.getUserMedia ||
-    navigator.webkitGetUserMedia ||
-    navigator.mozGetUserMedia ||
-    navigator.msgGetUserMedia
+  navigator.getUserMedia =  navigator.getUserMedia ||  navigator.webkitGetUserMedia ||  navigator.mozGetUserMedia ||   navigator.msgGetUserMedia
 
   if (navigator.getUserMedia) {
     // callback on success
@@ -73,43 +71,69 @@ const openCam = () => {
   }
 }
 
-const Http = new XMLHttpRequest()
-const url = 'https://localhost:44379/api/chathistories'
+
 
 // PART 1
+
 // funksionaliteti per me shkru ne web socket
 let ws = null
 
+// request object instantioation
+const Http = new XMLHttpRequest()
+const url = 'https://localhost:44379/api/chathistories'
+ 
 // metode ndihmese
 const isWsOpen = () => {
   return ws && ws.readyState === WebSocket.OPEN
 }
+
+let loadChatHistory = (topicId) => {
+  Http.open('GET', `https://localhost:44379/api/chathistories/movieId/${topicId}`)
+  Http.send()
+  Http.onreadystatechange = e => {
+    chat_history = Http.responseText
+    // console.log(Http.responseText)
+  }
+
+    data = [
+    { from: '3', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' },
+    { from: '5', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' }
+  ]
+  for (let index = 0; index < data.length; index++) {
+    renderChatMsg(data[index].from, data[index].msg)
+  }
+  
+}
+
+// havera t backendit 
+// me juve i kom tri kerkes
+// kom me ja u qu ni get request me mi pru filmat edhe id-t e tyne
+// kom me ja u qu ni get request me e marr chatin historyn per ni topic t caktum https://localhost:44379/api/chathistories/movieId/?
+// kom me ju u qu post requesta sikur 
+// {
+//       'topic': int(topicid),
+//       'from': string(uid),
+//       'msg': string(msg)
+// }
+
+let movies = null
+
+
+
 
 const openWs = () => {
   if (isWsOpen()) return
 
   // socketi hapet ne momentin e instancimit
   ws = new WebSocket('ws://127.0.0.1:7070')
+  // ws = new WebSocket('ws://192.168.0.247:7070')
+
+
+  // get movies and from db
   
-  data = [
-    { from: '$', msg: 'ckemi' },
-    { from: '1', msg: 'ckemi' },
-    { from: '1', msg: 'ckemi' },
-    { from: '5', msg: 'ckemi' },
-    { from: '1', msg: 'ckemi' }
-  ]
-  for (let index = 0; index < 5; index++) {
-    console.log(data[index].from)
-
-    renderChatMsg(data[index].from, data[index].msg)
-  }
-
-  Http.open('GET', url)
-  Http.send()
-  Http.onreadystatechange = e => {
-    console.log(Http.responseText)
-  }
-
   ws.addEventListener('open', onWsOpen)
   ws.addEventListener('close', onWsClose)
   ws.addEventListener('error', onWsError)
@@ -127,9 +151,8 @@ const onWsOpen = event => {
 }
 
 const onWsClose = event => {
-  alert(
-    `ws connection closed with cod)e ${event.reason} and code ${event.code}`
-  )
+  alert(`ws connection closed with cod)e ${event.reason} and code ${event.code}`)
+
   ws.removeEventListener('open', onWsOpen)
   ws.removeEventListener('close', onWsClose)
   ws.removeEventListener('error', onWsError)
@@ -170,9 +193,18 @@ const wsSubscribeToTopic = topic => {
     alert('WS is not open')
     return
   }
+
+  // get chat history for topic
+
+
+
   if (!topic) return
+  $(".chat-body").empty();
+
   const data = JSON.stringify({ cmd: 'topic:sub', topic: topic })
   ws.send(data)
+
+  loadChatHistory(topic.id)
 }
 
 const wsUnsubscribeToTopic = topic => {
@@ -180,6 +212,8 @@ const wsUnsubscribeToTopic = topic => {
     alert('WS is not open')
     return
   }
+  $(".chat-body").empty();
+
   if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:unsub', topic: topic })
   ws.send(data)
@@ -190,6 +224,8 @@ const wsCreateToTopic = topic => {
     alert('WS is not open')
     return
   }
+  $(".chat-body").empty();
+
   if (!topic) return
   const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
   ws.send(data)
@@ -207,18 +243,20 @@ const wsWriteToTopic = (topic, payload) => {
     payload: payload
   })
   ws.send(data)
+  $('#msg-text').val("")
+
 }
 
 // duhet mi bind qito funksionalitete
 
 $(document).ready(() => {
   $('#msg-form').submit(ev => {
-    ev.preventDefaul()
+    ev.preventDefault()
     ev.stopPropagation()
   })
 
   $('#topic-form').submit(ev => {
-    ev.preventDefaul()
+    ev.preventDefault()
     ev.stopPropagation()
   })
 
@@ -248,9 +286,18 @@ $(document).ready(() => {
 
     wsWriteToTopic(topic, { type: 'text', msg })
     renderChatMsg(null, msg)
+    $('#messages').scrollTop =   $('#messages').scrollHeight
+    console.log($('#messages').scrollTop)
+
+    
   })
 
   $('#send-video').click(() => {
     openCam()
   })
+  $('#msg-text').keypress(function(e){
+    if (e.which == 13){
+        $("#send-msg").click();
+    }
+});
 })
