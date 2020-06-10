@@ -1,5 +1,15 @@
 // const { write } = require("fs")
 
+const renderDropdownList = (movies) => {
+  for (let index = 0; index < movies.length; index++) {
+    const html = `<option value = ${movies[index]}>${movies[index]}</option>`
+    $('#ws-create').append(html)    
+  }
+}
+
+
+
+
 // const render
 const renderChatMsg = (from, msg) => {
   // per me qit From: permi chat nese nuk e ke shkrujt msg ti
@@ -100,24 +110,15 @@ let loadChatHistory = (topicId) => {
     { from: '1', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
     { from: '5', msg: 'ckemi' },
-    { from: '1', msg: 'ckemi' }
+    { from: '7', msg: 'ckemi' }
   ]
   for (let index = 0; index < data.length; index++) {
     renderChatMsg(data[index].from, data[index].msg)
+    renderDropdownList(data[index].from)
   }
   
 }
 
-// havera t backendit 
-// me juve i kom tri kerkes
-// kom me ja u qu ni get request me mi pru filmat edhe id-t e tyne
-// kom me ja u qu ni get request me e marr chatin historyn per ni topic t caktum https://localhost:44379/api/chathistories/movieId/?
-// kom me ju u qu post requesta sikur 
-// {
-//       'topic': int(topicid),
-//       'from': string(uid),
-//       'msg': string(msg)
-// }
 
 let movies = null
 
@@ -130,10 +131,33 @@ const openWs = () => {
   // socketi hapet ne momentin e instancimit
   ws = new WebSocket('ws://127.0.0.1:7070')
   // ws = new WebSocket('ws://192.168.0.247:7070')
-
+  data = [
+    { from: '3', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' },
+    { from: '1', msg: 'ckemi' },
+    { from: '5', msg: 'ckemi' },
+    { from: '7', msg: 'ckemi' }
+  ]
+  for (let index = 0; index < data.length; index++) {
+    renderChatMsg(data[index].from, data[index].msg)
+    renderDropdownList(data[index].from)
+  }
 
   // get movies and from db
   
+  Http.open('GET', 'url to movies')
+  Http.send()
+  Http.onreadystatechange = e => {
+    movies = Http.responseText
+    // console.log(Http.responseText)
+  }
+  console.log(movies.sd, movies[sd])
+  // Http.open('GET', url)
+  // Http.send()
+  // // anonymous function that handles asynchron. requests (see https://stackoverflow.com/questions/247483/http-get-request-in-javascript)
+  // Http.onreadystatechange = e => {
+  //   console.log(Http.responseText)
+  // }
   ws.addEventListener('open', onWsOpen)
   ws.addEventListener('close', onWsClose)
   ws.addEventListener('error', onWsError)
@@ -219,17 +243,17 @@ const wsUnsubscribeToTopic = topic => {
   ws.send(data)
 }
 
-const wsCreateToTopic = topic => {
-  if (!isWsOpen()) {
-    alert('WS is not open')
-    return
-  }
-  $(".chat-body").empty();
+// const wsCreateToTopic = topic => {
+//   if (!isWsOpen()) {
+//     alert('WS is not open')
+//     return
+//   }
+//   $(".chat-body").empty();
 
-  if (!topic) return
-  const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
-  ws.send(data)
-}
+//   if (!topic) return
+//   const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
+//   ws.send(data)
+// }
 
 const wsWriteToTopic = (topic, payload) => {
   if (!isWsOpen()) {
@@ -265,7 +289,10 @@ $(document).ready(() => {
   })
 
   $('#ws-create').click(() => {
-    const topic = $('#topic-txt').val()
+    // console.log($('.ws-create').val(), 'dsadsasda')
+    // console.log($('#ws-create').find(":selected").text(), 'dsasdasd')
+    // $('#aioConceptName').find(":selected").text();
+    const topic = $('#ws-create').find(":selected").text()
     wsCreateToTopic(topic)
   })
 
