@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": " cross-env-shell DEBUG='fiek-ws' node index.js --port=7070 --host='192.168.0.10'"
+    "start": " cross-env-shell DEBUG='fiek-ws' node index.js --port=7070 --host='127.0.0.1'"
   },
   "author": "Vigan Dika",
   "license": "ISC",

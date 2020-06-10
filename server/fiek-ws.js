@@ -52,7 +52,7 @@ class FiekWs extends WebSocketNode.Server {
                     switch(cmd){
                         case 'topic:sub': this._subscribeToTopic(uid, topic); break
                         case 'topic:unsub': this._unsubscribeToTopic(uid, topic); break
-                        case 'topic:create': this._createTopic(uid, topic); break
+                        // case 'topic:create': this._createTopic(uid, topic); break
                         case 'topic:write': this._writeToTopic(uid, topic, data.payload); break
                         default: throw new Error('ERR_INVALID_CMD')
                     }
@@ -89,7 +89,7 @@ class FiekWs extends WebSocketNode.Server {
 
     _subscribeToTopic(uid, topic){
         const t = this._channels[topic]
-        if(!t) throw new Error('ERR_INVALID_TOPIC')
+        if(!t) this._createTopic(uid, topic)
         if(!t.uids.includes(uid)) t.uids.push(uid)
         debug('client %s subscribed to %s', uid, topic)
 

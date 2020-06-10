@@ -21,10 +21,8 @@
 
       <div class="col-4 crypto-container">
         <div class="row">
-          <div class="col-12 crypto-header">
-            <button class="btn btn-info" id="ws-crypto">
-              Subscribe to crypto trades
-            </button>
+          <div class="col-12 crypto-header" style="width: 20%;">
+            <img src="pic.png" alt="Unavailable pic. Srry :(" width="600" height="400">
           </div>
         </div>
         <div class="col-12 crypto-trades">
@@ -34,17 +32,25 @@
       <div class="col-8 chat-container">
         <div class="chat-header">
           <form class="form-inline mb-0" id="topic-form">
-            <div class="form-group mr-3">
-              <input type="text" id="topic-txt" class="form-control" placeholder="Topic title">
+            <div class="form-group mr-">
+              <!-- <form> -->
+                <select name = "dropdown" id="ws-create">
+                  <option value="Athletics:" disabled="disabled" selected>Which movie do you want to talk about?</option>
+                   <!-- <option value = "Computer Architecture" selected>Computer Architecture</option> -->
+                </select>
+             <!-- </form> -->
+
+              <!-- <input type="text" id="topic-txt" class="form-control" placeholder="Topic title"> -->
             </div>
-            <div class="form-group mr-3">
+            &nbsp;&nbsp;
+            <!-- <div class="form-group mr-3">
               <button type="button" class="btn btn-dark-blue" id="ws-create">Create</button>
+            </div> -->
+            <div class="form-group mr-3">
+              <button type="button" class="btn btn-info" id="ws-sub">Enter chat room</button>
             </div>
             <div class="form-group mr-3">
-              <button type="button" class="btn btn-info" id="ws-sub">Subscribe</button>
-            </div>
-            <div class="form-group mr-3">
-              <button type="button" class="btn btn-dark-blue-inverse" id="ws-unsub">Unsubscribe</button>
+              <button type="button" class="btn btn-dark-blue-inverse" id="ws-unsub">Leave chat room</button>
             </div>
             <div class="form-group">
               <button type="button" class="btn btn-danger" id="ws-connect">Connect to WS</button>
