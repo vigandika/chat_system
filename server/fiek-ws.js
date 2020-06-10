@@ -98,8 +98,8 @@ class FiekWs extends WebSocketNode.Server {
     }
 
     _subscribeToTopic(uid, topic){
+        if(!this._channels[topic]) this._createTopic(uid, topic)
         const t = this._channels[topic]
-        if(!t) this._createTopic(uid, topic)
         if(!t.uids.includes(uid)) t.uids.push(uid)
         debug('client %s subscribed to %s', uid, topic)
 

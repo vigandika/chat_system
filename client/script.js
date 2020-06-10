@@ -98,12 +98,12 @@ const isWsOpen = () => {
 }
 
 let loadChatHistory = (topicId) => {
-  Http.open('GET', `https://localhost:44379/api/chathistories/movieId/${topicId}`)
-  Http.send()
-  Http.onreadystatechange = e => {
-    chat_history = Http.responseText
-    // console.log(Http.responseText)
-  }
+  // Http.open('GET', `https://localhost:44379/api/chathistories/movieId/${topicId}`)
+  // Http.send()
+  // Http.onreadystatechange = e => {
+  //   chat_history = Http.responseText
+  //   // console.log(Http.responseText)
+  // }
 
     data = [
     { from: '3', msg: 'ckemi' },
@@ -129,8 +129,8 @@ const openWs = () => {
   if (isWsOpen()) return
 
   // socketi hapet ne momentin e instancimit
-  ws = new WebSocket('ws://127.0.0.1:7070')
-  // ws = new WebSocket('ws://192.168.0.247:7070')
+  ws = new WebSocket('ws://192.168.186.233:7070')
+  // ws = new WebSocket('ws://192.168.186.226:7070')
   data = [
     { from: '3', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
@@ -145,13 +145,13 @@ const openWs = () => {
 
   // get movies and from db
   
-  Http.open('GET', 'url to movies')
-  Http.send()
-  Http.onreadystatechange = e => {
-    movies = Http.responseText
-    // console.log(Http.responseText)
-  }
-  console.log(movies.sd, movies[sd])
+  // Http.open('GET', 'url to movies')
+  // Http.send()
+  // Http.onreadystatechange = e => {
+  //   movies = Http.responseText
+  //   // console.log(Http.responseText)
+  // }
+  // console.log(movies.sd, movies[sd])
   // Http.open('GET', url)
   // Http.send()
   // // anonymous function that handles asynchron. requests (see https://stackoverflow.com/questions/247483/http-get-request-in-javascript)
@@ -243,24 +243,24 @@ const wsUnsubscribeToTopic = topic => {
   ws.send(data)
 }
 
-// const wsCreateToTopic = topic => {
-//   if (!isWsOpen()) {
-//     alert('WS is not open')
-//     return
-//   }
-//   $(".chat-body").empty();
+const wsCreateToTopic = topic => {
+  if (!isWsOpen()) {
+    alert('WS is not open')
+    return
+  }
+  $(".chat-body").empty();
 
-//   if (!topic) return
-//   const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
-//   ws.send(data)
-// }
+  if (!topic) return
+  const data = JSON.stringify({ cmd: 'topic:create', topic: topic })
+  ws.send(data)
+}
 
 const wsWriteToTopic = (topic, payload) => {
   if (!isWsOpen()) {
     alert('WS is not open')
     return
   }
-  if (!topic || !payload) return
+  if (!topic || !payload) console.log('kloos')
   const data = JSON.stringify({
     cmd: 'topic:write',
     topic: topic,
@@ -288,16 +288,17 @@ $(document).ready(() => {
     openWs()
   })
 
-  $('#ws-create').click(() => {
-    // console.log($('.ws-create').val(), 'dsadsasda')
-    // console.log($('#ws-create').find(":selected").text(), 'dsasdasd')
-    // $('#aioConceptName').find(":selected").text();
-    const topic = $('#ws-create').find(":selected").text()
-    wsCreateToTopic(topic)
-  })
+  // $('#ws-create').click(() => {
+  //   // console.log($('.ws-create').val(), 'dsadsasda')
+  //   // console.log($('#ws-create').find(":selected").text(), 'dsasdasd')
+  //   // $('#aioConceptName').find(":selected").text();
+  //   const topic = $('#ws-create').find(":selected").text()
+  //   wsSubscribeToTopic(topic)
+  // })
 
   $('#ws-sub').click(() => {
-    const topic = $('#topic-txt').val()
+    const topic = $('#ws-create').find(":selected").text()
+    // const topic = $('#topic-txt').val()
     wsSubscribeToTopic(topic)
   })
 
@@ -307,14 +308,15 @@ $(document).ready(() => {
   })
 
   $('#send-msg').click(() => {
-    const topic = $('#topic-txt').val()
+    console.log('are u here')
+    const topic = $('#ws-create').find(":selected").text()
     const msg = $('#msg-text').val()
     if (!topic || !msg) return
 
     wsWriteToTopic(topic, { type: 'text', msg })
     renderChatMsg(null, msg)
-    $('#messages').scrollTop =   $('#messages').scrollHeight
-    console.log($('#messages').scrollTop)
+    // $('#messages').scrollTop =   $('#messages').scrollHeight
+    // console.log($('#messages').scrollTop)
 
     
   })
