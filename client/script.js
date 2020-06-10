@@ -15,13 +15,15 @@ const renderChatMsg = (from, msg) => {
   // per me qit From: permi chat nese nuk e ke shkrujt msg ti
   const innerHtml = from ? `<div>From ${from}:</div><div>${msg}</div>` : msg
   const html = `
-  <div class="w-100">
+  <div class="w-100", id='messages'>
     <div class="chat-msg ${from ? 'chat-msg-other' : ''}">
     ${innerHtml}
     </div>
   </div>`
 
   $('.chat-body').append(html)
+  console.log($('#messages').scrollHeight)
+
 }
 
 const renderVideoFrame = (from, data) => {
@@ -165,6 +167,11 @@ const openWs = () => {
 // recreate ws.addEventlistener('open', )  and see cka pranon funksion
 const onWsOpen = event => {
   console.log('ws connected to server')
+  var name = prompt("Jepe emrin ?")
+  const data = JSON.stringify({ cmd: 'topic:init',  name: name})
+
+  ws.send(data)
+
 }
 
 const onWsClose = event => {
@@ -183,7 +190,8 @@ const onWsError = ev => {
 const onWsMessage = ev => {
   try {
     const data = JSON.parse(ev.data.toString('utf-8'))
-    const { from, topic, payload } = data
+    const { from, topic, payload } = data // from = {123:'hej}
+    console.log(from)
     // switch (topic) {
     // case 'chat':
     const { type, msg } = payload
@@ -259,18 +267,20 @@ const wsWriteToTopic = (topic, payload) => {
     payload: payload
   })
   ws.send(data)
+  $('#msg-text').val("")
+
 }
 
 // duhet mi bind qito funksionalitete
 
 $(document).ready(() => {
   $('#msg-form').submit(ev => {
-    ev.preventDefaul()
+    ev.preventDefault()
     ev.stopPropagation()
   })
 
   $('#topic-form').submit(ev => {
-    ev.preventDefaul()
+    ev.preventDefault()
     ev.stopPropagation()
   })
 
@@ -303,9 +313,18 @@ $(document).ready(() => {
 
     wsWriteToTopic(topic, { type: 'text', msg })
     renderChatMsg(null, msg)
+    $('#messages').scrollTop =   $('#messages').scrollHeight
+    console.log($('#messages').scrollTop)
+
+    
   })
 
   $('#send-video').click(() => {
     openCam()
   })
+  $('#msg-text').keypress(function(e){
+    if (e.which == 13){
+        $("#send-msg").click();
+    }
+});
 })

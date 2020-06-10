@@ -14,19 +14,25 @@ class FiekWs extends WebSocketNode.Server {
 
         /**@type {{[key:string]: WebSocketNode}} */
         this._clients = {};
-        /**@type {{[key:string]:{write: boolean, uids:string[]} }} 
+
+        /**@type {{[key:string]:uids:string[] }} 
          * write - flag ( a osht channel writable prej clientave)
          *  uuids - klientat qe kane subscribe
         */
         this._channels = {};
-
+        
+        /**
+         * @type {{[uid:string]:name:string}}
+         */
+        this._names = {};
         // this.once('listening', )
     }
-
+    
     init(){
         this.on('connection', (ws) => {
             const uid = uuid()
             this._clients[uid] = ws
+            this._names[uid] = 'hej'
 
             ws.on('error', (err)=>{ 
                 debug('error occured on client %s:%s', uid, err.toString())
@@ -48,12 +54,16 @@ class FiekWs extends WebSocketNode.Server {
                     // write to topic: { cmd: 'topic:write', topic:<topic>, payload: * }
                     const data = JSON.parse(msg.toString('utf-8'))
                     // cmd topic i kem gjithqysh edhe i eksportojme nga data
-                    const {cmd, topic} = data
+                    const {cmd} = data
+                    // if (data.topic == '')
+                    // { const {cmd} = data }
+                    // else{
+                    //     const {cmd, topic} = data}
                     switch(cmd){
-                        case 'topic:sub': this._subscribeToTopic(uid, topic); break
-                        case 'topic:unsub': this._unsubscribeToTopic(uid, topic); break
-                        // case 'topic:create': this._createTopic(uid, topic); break
-                        case 'topic:write': this._writeToTopic(uid, topic, data.payload); break
+                        case 'topic:init': this._names[uid] = data.name;break
+                        case 'topic:sub': this._subscribeToTopic(uid, data.topic); break
+                        case 'topic:unsub': this._unsubscribeToTopic(uid, data.topic); break
+                        case 'topic:write': this._writeToTopic(uid, data.topic, data.payload,this._names); break
                         default: throw new Error('ERR_INVALID_CMD')
                     }
 
@@ -83,7 +93,7 @@ class FiekWs extends WebSocketNode.Server {
     _createTopic(uid, topic){
         if(this._channels[topic]) throw new Error('ERR_TOPIC_EXISTS')
         // e fusim automatikisht userin aktual
-        this._channels[topic] = {write: true, uids: [uid]}
+        this._channels[topic] = {uids: [uid]}
         debug('client %s created topic %s', uid, topic)
     }
 
@@ -100,19 +110,23 @@ class FiekWs extends WebSocketNode.Server {
         if(!t) throw new Error('ERR_INVALID_TOPIC')
         t.uids = t.uids.filter(x => x!==uid)
         debug('client %s unsubscribed to %s', uid, topic)
-
     }
 
-    _writeToTopic(uid, topic, payload){
+    _writeToTopic(uid, topic, payload, _names){
         const t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
+        
+        if (t['uids'].includes(uid)){
         // jo uid e serverit dhe a eshte topic writable
-        const msg = JSON.stringify({from: uid, topic:topic, payload})
+        const msg = JSON.stringify({from: _names[uid], topic:topic, payload})
+        
         for (const key of t.uids) {
             if(key === uid) continue
             const client = this._clients[key]
-            if (client && client.readyState === WebSocketNode.OPEN){
+            if (client && client.readyState === WebSocketNode.OPEN ){
                 client.send(msg)
+                }
+        
             }
         }
 
