@@ -5,6 +5,7 @@ const debug = require('debug')('fiek-ws')
 const WebSocketNode = require('ws')
 // uuid A universally unique identifier (UUID) is a 128-bit number used to identify information in computer systems
 const uuid = require('uuid').v4
+const request = require('request')
 
 
 class FiekWs extends WebSocketNode.Server {
@@ -128,6 +129,15 @@ class FiekWs extends WebSocketNode.Server {
                 }
         
             }
+            // request.post(
+            //     "SHKRUJE URL QITU",
+            //     {json:{uid:uid,topic:t,msg:msg}},
+            //     function(error,response,message){
+            //         if(!error,response.statusCode=200){
+            //             debug(message)
+            //         }
+            //     }
+            // )
         }
 
     }
