@@ -1,6 +1,9 @@
 'use strict'
 
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const debug = require('debug')('fiek-ws')
+const http = require('http')
+const axios = require('axios')
 // importojme web sokcetin
 const WebSocketNode = require('ws')
 // uuid A universally unique identifier (UUID) is a 128-bit number used to identify information in computer systems
@@ -120,15 +123,37 @@ class FiekWs extends WebSocketNode.Server {
         if (t.includes(uid)){
         // jo uid e serverit dhe a eshte topic writable
         const msg = JSON.stringify({from: name, topic:topic, payload})
+        const msgToDB = JSON.stringify({from: name , name:topic, message:payload.msg})
         
+        // var xhr = new XMLHttpRequest();
+        // xhr.open('POST','https://192.168.88.40:5001/api/chathistories',true)
+        // xhr.setRequestHeader('Content-Type','application/json')
+
+    const data = JSON.stringify({
+        from: name , 
+        name:topic, 
+        message:payload.msg})
+
+// write data to request body
+
         for (const key of t) {
+            debug(payload, msgToDB)
+            if(payload.type == 'text'){
+            
+            axios.post('https://192.168.88.40:5001/api/chathistories',data)
+
+                // req.write(data)
+                // req.end()
+            // xhr.send(msgToDB)
             if(key === uid) continue
             const client = this._clients[key]
             if (client && client.readyState === WebSocketNode.OPEN ){
                 client.send(msg)
-                }
-        
+                debug(payload, 'sdf')
+            
             }
+    
+        }
             // request.post(
             //     "SHKRUJE URL QITU",
             //     {json:{uid:uid,topic:t,msg:msg}},
@@ -142,6 +167,6 @@ class FiekWs extends WebSocketNode.Server {
 
     }
 }
-
+}
 
 module.exports = FiekWs

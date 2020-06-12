@@ -1,11 +1,10 @@
-
 // funksionaliteti per me shkru ne web socket
 let ws = null
 
 // request object instantioation
 const Http = new XMLHttpRequest()
-const url = 'https://localhost:44379/api/chathistories'
- 
+// const url = 'https://localhost:44379/api/chathistories'
+
 // metode ndihmese
 const isWsOpen = () => {
   return ws && ws.readyState === WebSocket.OPEN
@@ -18,7 +17,7 @@ let loadChatHistory = (topicId) => {
   //   // console.log(Http.responseText)
   // }
 
-    data = [
+  data = [
     { from: '3', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
@@ -29,7 +28,7 @@ let loadChatHistory = (topicId) => {
     renderChatMsg(data[index].from, data[index].msg)
     // renderDropdownList(data[index].from)
   }
-  
+
 }
 
 
@@ -40,8 +39,7 @@ const openWs = () => {
   if (isWsOpen()) return
 
   // socketi hapet ne momentin e instancimit
-  ws = new WebSocket('ws://192.168.0.247:7070')
-  // ws = new WebSocket('ws://192.168.186.226:7070')
+  ws = new WebSocket('ws://192.168.88.86:7070')
   data = [
     { from: '3', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
@@ -51,24 +49,29 @@ const openWs = () => {
   ]
   for (let index = 0; index < data.length; index++) {
     renderChatMsg(data[index].from, data[index].msg)
-    renderDropdownList(data[index].from)
   }
 
-  // get movies and from db
-  
-  // Http.open('GET', 'url to movies')
-  // Http.send()
-  // Http.onreadystatechange = e => {
-  //   movies = Http.responseText
-  //   // console.log(Http.responseText)
-  // }
-  // console.log(movies.sd, movies[sd])
-  // Http.open('GET', url
-  // Http.send()
-  // // anonymous function that handles asynchron. requests (see https://stackoverflow.com/questions/247483/http-get-request-in-javascript)
-  // Http.onreadystatechange = e => {
-  //   console.log(Http.responseText)
-  // }
+  let movies = null
+  let got_response = false
+
+  Http.open('GET', 'https://192.168.88.40:5001/api/movies')
+  Http.onreadystatechange = e => {
+    movies = JSON.parse(Http.responseText.toString('utf-8'))
+    movie_and_id = {}
+    if (!got_response){
+    for (let index = 0; index < movies.length; index++) {
+      const {name,id} = movies[index]
+      movie_and_id = {name:id}
+      console.log(movies[index])
+      renderDropdownList(movies[index].name)
+      }
+      got_response = !got_response
+      // console.log(movie_and_id)
+
+    }
+  }
+  Http.send()
+
   ws.addEventListener('open', onWsOpen)
   ws.addEventListener('close', onWsClose)
   ws.addEventListener('error', onWsError)
@@ -79,7 +82,7 @@ const openWs = () => {
 const onWsOpen = event => {
   console.log('ws connected to server')
   var name = prompt("Jepe emrin ?")
-  const data = JSON.stringify({ cmd: 'topic:init',  name: name})
+  const data = JSON.stringify({ cmd: 'topic:init', name: name })
 
   ws.send(data)
 
@@ -168,6 +171,7 @@ const wsWriteToTopic = (topic, payload) => {
     cmd: 'topic:write',
     topic: topic,
     payload: payload
+    // movieId: movie_and_id[topic]
   })
   ws.send(data)
   $('#msg-text').val("")
@@ -217,11 +221,11 @@ $(document).ready(() => {
   $('#send-video').click(() => {
     openCam()
   })
-  $('#msg-text').keypress(function(e){
-    if (e.which == 13){
-        $("#send-msg").click();
+  $('#msg-text').keypress(function (e) {
+    if (e.which == 13) {
+      $("#send-msg").click();
     }
-});
+  });
 })
 
 
@@ -230,11 +234,10 @@ $(document).ready(() => {
 
 
 const renderDropdownList = (movies) => {
-  for (let index = 0; index < movies.length; index++) {
-    const html = `<option value = ${movies[index]}>${movies[index]}</option>`
-    $('#ws-create').append(html)    
+    const html = `<option value = ${movies}>${movies}</option>`
+    $('#ws-create').append(html)
   }
-}
+
 
 
 
@@ -245,14 +248,14 @@ const renderChatMsg = (from, msg) => {
   const innerHtml = from ? `<div>From ${from}:</div><div>${msg}</div>` : msg
   const html = `
   <div class="w-100", id='messages'>
-    <div class="chat-msg ${from ? 'chat-msg-other' : ''}">
+    <div class="chat-msg ${from ? '' : 'chat-msg-you'}">
     ${innerHtml}
     </div>
   </div>`
 
   $('.chat-body').append(html)
-  $('.chat-body').scrollTop($('.chat-body')[0].scrollHeight)  
-  
+  $('.chat-body').scrollTop($('.chat-body')[0].scrollHeight)
+
 }
 
 const renderVideoFrame = (from, data) => {
@@ -264,7 +267,7 @@ const renderVideoFrame = (from, data) => {
   imgElement.src = data
 }
 
-const FPS = 120 
+const FPS = 120
 
 // dy diva t njejte, video dergohet te klienti tjeter kurse canvasi osht self cam
 const video = document.getElementById('chat-video-src')
@@ -281,12 +284,12 @@ const openCam = () => {
   if (!isWsOpen()) alert('ws is not open')
   //navigator property e browserit
   // njona prej ktyne bon        default              chrome dhe safari                    mozilla                         microsoft edge
-  navigator.getUserMedia =  navigator.getUserMedia ||  navigator.webkitGetUserMedia ||  navigator.mozGetUserMedia ||   navigator.msgGetUserMedia
+  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msgGetUserMedia
 
   if (navigator.getUserMedia) {
     // callback on success
     navigator.getUserMedia(
-      { video: true,audio:true },
+      { video: true, audio: true },
       stream => {
         // per me attach streamin te video
         video.srcObject = stream
