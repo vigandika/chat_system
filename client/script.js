@@ -2,7 +2,6 @@
 let ws = null
 
 // request object instantioation
-const Http = new XMLHttpRequest()
 // const url = 'https://localhost:44379/api/chathistories'
 
 // metode ndihmese
@@ -10,26 +9,25 @@ const isWsOpen = () => {
   return ws && ws.readyState === WebSocket.OPEN
 }
 
-let loadChatHistory = (topicId) => {
-  // Http.open('GET', `https://localhost:44379/api/chathistories/movieId/${topicId}`)
-  // Http.send()
-  // Http.onreadystatechange = e => {
-  //   // console.log(Http.responseText)
-  // }
+let loadChatHistory = (movie_name) => {
 
-  data = [
-    { from: '3', msg: 'ckemi' },
-    { from: '1', msg: 'ckemi' },
-    { from: '1', msg: 'ckemi' },
-    { from: '5', msg: 'ckemi' },
-    { from: '7', msg: 'ckemi' }
-  ]
-  for (let index = 0; index < data.length; index++) {
-    renderChatMsg(data[index].from, data[index].msg)
-    // renderDropdownList(data[index].from)
+  let got_chat_response = false
+
+  const chat_req = new XMLHttpRequest()
+  // Get chat history by movie name
+  chat_req.open('GET',`https://172.0.4.18:5001/api/chathistories/movies/${movie_name}`,true)
+  chat_req.onreadystatechange = e =>{
+    chat_history = JSON.parse(chat_req.responseText.toString('utf-8'))
+    if (!got_chat_response){
+    for (let index = 0; index < chat_history.length; index++) {
+      renderChatMsg(chat_history[index].from, chat_history[index].message)
+    } 
+    got_chat_response = !got_chat_response 
+    }
   }
-
+  chat_req.send()
 }
+
 
 
 let movies = null
@@ -39,7 +37,7 @@ const openWs = () => {
   if (isWsOpen()) return
 
   // socketi hapet ne momentin e instancimit
-  ws = new WebSocket('ws://192.168.88.86:7070')
+  ws = new WebSocket('ws://172.0.1.152:7070')
   data = [
     { from: '3', msg: 'ckemi' },
     { from: '1', msg: 'ckemi' },
@@ -47,29 +45,32 @@ const openWs = () => {
     { from: '5', msg: 'ckemi' },
     { from: '7', msg: 'ckemi' }
   ]
-  for (let index = 0; index < data.length; index++) {
-    renderChatMsg(data[index].from, data[index].msg)
-  }
+  
+  
+
+  const Http = new XMLHttpRequest()
+
+  
+
 
   let movies = null
-  let got_response = false
 
-  Http.open('GET', 'https://192.168.88.40:5001/api/movies')
+  got_movies_response = false
+
+
+  Http.open('GET', 'https://172.0.4.18:5001/api/movies')
   Http.onreadystatechange = e => {
     movies = JSON.parse(Http.responseText.toString('utf-8'))
     movie_and_id = {}
-    if (!got_response){
+    if (!got_movies_response){
     for (let index = 0; index < movies.length; index++) {
-      const {name,id} = movies[index]
-      movie_and_id = {name:id}
-      console.log(movies[index])
       renderDropdownList(movies[index].name)
-      }
-      got_response = !got_response
-      // console.log(movie_and_id)
 
     }
+    got_movies_response = true
+
   }
+}
   Http.send()
 
   ws.addEventListener('open', onWsOpen)
@@ -105,7 +106,6 @@ const onWsMessage = ev => {
   try {
     const data = JSON.parse(ev.data.toString('utf-8'))
     const { from, topic, payload } = data // from = {123:'hej}
-    console.log(from)
     // switch (topic) {
     // case 'chat':
     const { type, msg } = payload
@@ -143,9 +143,10 @@ const wsSubscribeToTopic = topic => {
   $(".chat-body").empty();
 
   const data = JSON.stringify({ cmd: 'topic:sub', topic: topic })
+  loadChatHistory(topic)
   ws.send(data)
 
-  loadChatHistory(topic.id)
+  // loadChatHistory(topic.id)
 }
 
 const wsUnsubscribeToTopic = topic => {
@@ -219,6 +220,7 @@ $(document).ready(() => {
   })
 
   $('#send-video').click(() => {
+    videoRecording = !videoRecording
     openCam()
   })
   $('#msg-text').keypress(function (e) {
@@ -289,10 +291,11 @@ const openCam = () => {
   if (navigator.getUserMedia) {
     // callback on success
     navigator.getUserMedia(
-      { video: true, audio: true },
+      { video: true },
       stream => {
         // per me attach streamin te video
         video.srcObject = stream
+        if(!videoRecording) stream.getTracks().forEach(track => track.stop())
         const $topic = $('#topic-txt')
         // tash e bojme output video e shfaqim sa here t kem frames
         recInterval = setInterval(() => {

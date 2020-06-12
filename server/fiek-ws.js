@@ -1,14 +1,16 @@
 'use strict'
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const debug = require('debug')('fiek-ws')
 const http = require('http')
 const axios = require('axios')
+
 // importojme web sokcetin
 const WebSocketNode = require('ws')
+
 // uuid A universally unique identifier (UUID) is a 128-bit number used to identify information in computer systems
 const uuid = require('uuid').v4
-const request = require('request')
 
 
 class FiekWs extends WebSocketNode.Server {
@@ -111,7 +113,7 @@ class FiekWs extends WebSocketNode.Server {
         let t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
         debug(t)
-        this._channels[topicGIT] = t.filter(x => x!==uid)
+        this._channels[topic] = t.filter(x => x!==uid)
         debug(this._channels[topic])
         debug('client %s unsubscribed to %s', uid, topic)
     }
@@ -119,32 +121,25 @@ class FiekWs extends WebSocketNode.Server {
     _writeToTopic(uid, topic, payload, name){
         const t = this._channels[topic]
         if(!t) throw new Error('ERR_INVALID_TOPIC')
-
+        debug('erdh kut', payload)
         if (t.includes(uid)){
         // jo uid e serverit dhe a eshte topic writable
         const msg = JSON.stringify({from: name, topic:topic, payload})
-        const msgToDB = JSON.stringify({from: name , name:topic, message:payload.msg})
         
-        // var xhr = new XMLHttpRequest();
-        // xhr.open('POST','https://192.168.88.40:5001/api/chathistories',true)
-        // xhr.setRequestHeader('Content-Type','application/json')
 
-    const data = JSON.stringify({
-        from: name , 
-        name:topic, 
-        message:payload.msg})
+        const data = {
+            from: name , 
+            name:topic, 
+            message:payload.msg}
 
-// write data to request body
-
-        for (const key of t) {
-            debug(payload, msgToDB)
-            if(payload.type == 'text'){
-            
-            axios.post('https://192.168.88.40:5001/api/chathistories',data)
-
-                // req.write(data)
-                // req.end()
-            // xhr.send(msgToDB)
+        
+        if(payload.type == 'text'){
+            debug(data)
+            axios.post('https://172.0.4.18:5001/api/chathistories', data).then((res) => {
+                debug(`statusCode: ${res.statusCode}`)
+                debug(res)}).catch((error) => {debug(error)})
+        }
+        for (const key of t) {   
             if(key === uid) continue
             const client = this._clients[key]
             if (client && client.readyState === WebSocketNode.OPEN ){
@@ -154,19 +149,10 @@ class FiekWs extends WebSocketNode.Server {
             }
     
         }
-            // request.post(
-            //     "SHKRUJE URL QITU",
-            //     {json:{uid:uid,topic:t,msg:msg}},
-            //     function(error,response,message){
-            //         if(!error,response.statusCode=200){
-            //             debug(message)
-            //         }
-            //     }
-            // )
         }
 
     }
 }
-}
+
 
 module.exports = FiekWs

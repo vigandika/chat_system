@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "DEBUG='fiek-ws' node index.js --port=7070 --host='192.168.88.86'"
+    "start": "DEBUG='fiek-ws' node index.js --port=7070 --host='172.0.1.152'"
   },
   "author": "Vigan Dika, Shpat Gashi",
   "license": "ISC",
